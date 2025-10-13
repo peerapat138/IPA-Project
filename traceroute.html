@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="th">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Tester - TRACEROUTE</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="frame">
+    <nav>
+        <a href="index.html">HOME</a>
+        <a href="ping.html">PING</a>
+        <a class="active" href="traceroute.html">TRACEROUTE</a>
+        <a href="dns.html">DNS</a>
+        <a href="nwtable.html">NETWORK-TABLE</a>
+    </nav>
+
+    <div class="content page">
+        <div class="box">
+            <h2 class="title">TRACEROUTE TEST</h2>
+            <hr class="line">
+
+            <div class="container">
+                <div class="left">
+                    <h3>DESTINATION CONTROL</h3>
+                    <label>IP Address / Hostname:</label>
+                    <input type="text" placeholder="destination">
+                    <button class="small-btn">USE NETWORK-TABLE</button>
+
+                    <label for="traceroute-command">Command:</label>
+                    <select id="traceroute-command">
+                        <option value="">-</option>
+                        <option value="-d">-d Do not resolve addresses to hostnames.</option>
+                        <option value="-h">-h Maximum number of hops to search for target.</option>
+                        <option value="-j">-j Loose source route along host-list (IPv4-only).</option>
+                        <option value="-R">-R Trace round-trip path (IPv6-only).</option>
+                        <option value="-S">-S Source address to use (IPv6-only).</option>
+                        <option value="-4">-4 Force using IPv4.</option>
+                        <option value="-6">-6 Force using IPv6.</option>
+                    </select>
+
+                    <input type="text" id="traceroute-param-input" class="command-param-input"
+                           placeholder="ใส่ค่า parameter (เช่น 20, host1, 1000)">
+                    <button class="btn">TRACEROUTE</button>
+                </div>
+
+                <div class="right">
+                    <div class="console">
+                        Tracing route to 192.168.1.1 over a maximum of 30 hops:<br>
+                        1 <1 ms <1 ms <1 ms 192.168.1.254<br>
+                        2 2 ms 1 ms 1 ms 10.0.0.1<br>
+                        3 4 ms 3 ms 3 ms 192.168.1.1<br>
+                    </div>
+                </div>
+            </div>
+
+            <div class="time">
+                TIME: <span id="clock">12:45:51</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- NETWORK TABLE POPUP -->
+<div class="popup-nwtable hidden" id="nwtable-popup">
+    <div class="popup-box">
+        <h2>Select Destination from Network-Table</h2>
+        <div class="ip-list-container" id="ip-list-container">
+            <p>No entries found. Please add networks in the NETWORK-TABLE page.</p>
+        </div>
+        <button class="pop_clos" id="nwtable-cancel-btn">CLOSE</button>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Clock
+    setInterval(() => {
+        document.getElementById('clock').textContent = new Date().toLocaleTimeString();
+    }, 1000);
+
+    // Command Parameter Logic
+    const select = document.getElementById('traceroute-command');
+    const paramInput = document.getElementById('traceroute-param-input');
+    const optionsWithParam = ['-h','-j','-w','-S'];
+    select.addEventListener('change', (e) => {
+        if (optionsWithParam.includes(e.target.value)) {
+            paramInput.style.display = 'block';
+            paramInput.placeholder = `Enter the value for ${e.target.value}`;
+        } else {
+            paramInput.style.display = 'none';
+            paramInput.value = '';
+        }
+    });
+
+    // NETWORK TABLE POPUP Logic
+    const openTableBtn = document.querySelector('.small-btn');
+    const destinationInput = document.querySelector('.left input[type="text"]');
+    const popup = document.getElementById('nwtable-popup');
+    const closeBtn = document.getElementById('nwtable-cancel-btn');
+    const ipListContainer = document.getElementById('ip-list-container');
+
+    openTableBtn.addEventListener('click', () => {
+        populateIpList(ipListContainer, destinationInput);
+        popup.classList.remove('hidden');
+    });
+
+    closeBtn.addEventListener('click', () => popup.classList.add('hidden'));
+
+    function populateIpList(container, targetInput) {
+        let entries = [
+            { ip: "10.30.6.15", cidr: "/23", gateway: "10.30.6.1" },
+            { ip: "10.30.6.65", cidr: "/23", gateway: "10.30.6.1" },
+            { ip: "192.168.1.1", cidr: "/24", gateway: "192.168.1.254" }
+        ];
+
+        container.innerHTML = '';
+        if (entries.length === 0) {
+            container.innerHTML = '<p>No entries found. Please add networks in the NETWORK-TABLE page.</p>';
+            return;
+        }
+
+        entries.forEach(entry => {
+            const item = document.createElement('div');
+            item.className = 'ip-list-item';
+            item.textContent = `${entry.ip} (${entry.cidr})`;
+            item.dataset.ip = entry.ip;
+            item.addEventListener('click', () => {
+                targetInput.value = item.dataset.ip;
+                popup.classList.add('hidden');
+            });
+            container.appendChild(item);
+        });
+    }
+});
+</script>
+</body>
+</html>

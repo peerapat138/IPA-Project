@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="th">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Tester - DNS</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="frame">
+        <nav>
+            <a href="index.html">HOME</a>
+            <a href="ping.html">PING</a>
+            <a href="traceroute.html">TRACEROUTE</a>
+            <a class="active" href="dns.html">DNS</a>
+            <a href="nwtable.html">NETWORK-TABLE</a>
+        </nav>
+
+        <div class="content page">
+            <div class="box">
+                <h2 class="title">DNS LOOKUP</h2>
+                <hr class="line">
+
+                <div class="container">
+                    <div class="left">
+                        <h3>DESTINATION CONTROL</h3>
+                        <label>Domain Name:</label>
+                        <input type="text" placeholder="example.com">
+                        <button class="small-btn">USE NETWORK-TABLE</button>
+
+                        <label for="dns-type">Type:</label>
+                        <select id="dns-type">
+                            <option value="">-</option>
+                            <option value="A">A (IPv4 Address)</option>
+                            <option value="AAAA">AAAA (IPv6 Address)</option>
+                            <option value="MX">MX (Mail Server)</option>
+                            <option value="NS">NS (Name Server)</option>
+                            <option value="CNAME">CNAME (Canonical Name)</option>
+                            <option value="PTR">PTR (Pointer Record / Reverse DNS)</option>
+                            <option value="SOA">SOA (Start of Authority)</option>
+                            <option value="TXT">TXT (Text Record)</option>
+                            <option value="ANY">ANY (All Records)</option>
+                        </select>
+
+
+                        <button class="btn">RESOLVE</button>
+                    </div>
+
+                    <div class="right">
+                        <div class="console">
+                            Resolving example.com:<br>
+                            Name: example.com<br>
+                            Addresses: 93.184.216.34<br>
+                            TTL: 3600<br>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="time">
+                    TIME: <span id="clock">12:45:51</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- POPUP NETWORK TABLE -->
+    <div class="popup-nwtable hidden" id="nwtable-popup">
+        <div class="popup-box">
+            <h2>Select Destination from Network-Table</h2>
+            <div class="ip-list-container" id="ip-list-container">
+                <p>No entries found. Please add networks in the NETWORK-TABLE page.</p>
+            </div>
+            <button class="pop_clos" id="nwtable-cancel-btn">CLOSE</button>
+        </div>
+    </div>
+
+    <script>
+        // Time Clock
+        setInterval(() => {
+            document.getElementById('clock').textContent = new Date().toLocaleTimeString();
+        }, 1000);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const openTableBtn = document.querySelector('.small-btn');
+            const domainInput = document.querySelector('.left input[type="text"]');
+            const popup = document.getElementById('nwtable-popup');
+            const closeBtn = document.getElementById('nwtable-cancel-btn');
+            const ipListContainer = document.getElementById('ip-list-container');
+
+            // เปิด popup
+            openTableBtn.addEventListener('click', () => {
+                populateIpList(ipListContainer, domainInput);
+                popup.classList.remove('hidden');
+            });
+
+            // ปิด popup
+            closeBtn.addEventListener('click', () => popup.classList.add('hidden'));
+
+            function populateIpList(container, targetInput) {
+                const entries = [
+                    { ip: "10.30.6.15", cidr: "/23", gateway: "10.30.6.1" },
+                    { ip: "10.30.6.65", cidr: "/23", gateway: "10.30.6.1" },
+                    { ip: "192.168.1.1", cidr: "/24", gateway: "192.168.1.254" }
+                ];
+
+                container.innerHTML = '';
+
+                if (entries.length === 0) {
+                    container.innerHTML = '<p>No entries found. Please add networks in the NETWORK-TABLE page.</p>';
+                    return;
+                }
+                entries.forEach(entry => {
+                    const item = document.createElement('div');
+                    item.className = 'ip-list-item';
+                    item.textContent = `${entry.ip} (${entry.cidr})`;
+                    item.dataset.ip = entry.ip;
+
+                    item.addEventListener('click', () => {
+                        targetInput.value = item.dataset.ip;
+                        popup.classList.add('hidden');
+                    });
+
+                    container.appendChild(item);
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

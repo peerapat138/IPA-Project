@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="th">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Tester - PING</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="frame">
+        <nav>
+            <a href="index.html">HOME</a>
+            <a class="active" href="ping.html">PING</a>
+            <a href="traceroute.html">TRACEROUTE</a>
+            <a href="dns.html">DNS</a>
+            <a href="nwtable.html">NETWORK-TABLE</a>
+        </nav>
+
+        <div class="content page">
+            <div class="box">
+                <h2 class="title">PING TEST</h2>
+                <hr class="line">
+
+                <div class="container">
+                    <div class="left">
+                        <h3>DESTINATION CONTROL</h3>
+                        <label>IP Address:</label>
+                        <input type="text" placeholder="destination">
+                        <button class="small-btn">USE NETWORK-TABLE</button>
+
+                        <label for="ping-command">Command:</label>
+                        <select id="ping-command">
+                            <option value="">-</option>
+                            <option value="-t">-t Ping until stopped.</option>
+                            <option value="-n">-n count (Number of echo requests)</option>
+                            <option value="-l">-l size (Send buffer size)</option>
+                            <option value="-i">-i TTL (Time To Live)</option>
+                            <option value="-w">-w timeout (milliseconds)</option>
+                            <option value="-4">-4 Force using IPv4.</option>
+                            <option value="-6">-6 Force using IPv6.</option>
+                            <option value="-a">-a Resolve addresses to hostnames.</option>
+                            <option value="-f">-f Set Don't Fragment flag (IPv4-only). </option>
+                        </select>
+
+                        <input type="text" id="ping-param-input" class="command-param-input"
+                            placeholder="ใส่ค่า parameter (เช่น 10, 1000, 64)">
+
+                        <button class="btn">PING</button>
+                    </div>
+
+                    <div class="right">
+                        <div class="console">
+                            Pinging 192.168.1.1 with 32 bytes of data:<br>
+                            Reply from 192.168.1.1: bytes=32 time&lt;1ms TTL=64<br>
+                            Reply from 192.168.1.1: bytes=32 time&lt;1ms TTL=64<br>
+                            Reply from 192.168.1.1: bytes=32 time&lt;1ms TTL=64<br>
+                            Reply from 192.168.1.1: bytes=32 time&lt;1ms TTL=64<br>
+                            <br>
+                            Ping statistics for 192.168.1.1:<br>
+                            Packets: Sent = 4, Received = 4, Lost = 0 (0% loss)<br>
+                            Approximate round trip times in milli-seconds:<br>
+                            Minimum = 0ms, Maximum = 0ms, Average = 0ms<br>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="time">
+                    TIME: <span id="clock">12:45:51</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="popup-nwtable hidden" id="nwtable-popup">
+
+        <div class="popup-box">
+            <h2>Select Destination from Network-Table</h2>
+            <div class="ip-list-container" id="ip-list-container">
+                <p>No entries found. Please add networks in the NETWORK-TABLE page.</p>
+            </div>
+            <button class="pop_clos" id="nwtable-cancel-btn">CLOSE</button>
+        </div>
+    </div>
+    <script>
+        // Time Clock
+        setInterval(() => {
+            document.getElementById('clock').textContent = new Date().toLocaleTimeString();
+        }, 1000);
+
+        // --- PING Command Parameter Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const select = document.getElementById('ping-command');
+            const paramInput = document.getElementById('ping-param-input');
+            const optionsWithParam = ['-n', '-l', '-i', '-w', '-r', '-s', '-j', '-k', '-S'];
+
+            if (select && paramInput) {
+                select.addEventListener('change', (e) => {
+                    const selectedValue = e.target.value;
+                    if (optionsWithParam.includes(selectedValue)) {
+                        paramInput.style.display = 'block';
+                        paramInput.placeholder = `Enter the value for ${selectedValue}`;
+                    } else {
+                        paramInput.style.display = 'none';
+                        paramInput.value = '';
+                    }
+                });
+            }
+
+            // --- NETWORK TABLE POPUP Logic ---
+            const openTableBtn = document.querySelector('.small-btn');
+            const destinationInput = document.querySelector('.left input[type="text"]');
+            const popup = document.getElementById('nwtable-popup');
+            const closeBtn = document.getElementById('nwtable-cancel-btn');
+            const ipListContainer = document.getElementById('ip-list-container');
+
+            // 1. Open Popup
+            openTableBtn.addEventListener('click', () => {
+                populateIpList(ipListContainer, destinationInput);
+                popup.classList.remove('hidden');
+            });
+
+            // 2. Close Popup
+            closeBtn.addEventListener('click', () => popup.classList.add('hidden'));
+
+            // 3. Function to populate the IP list
+            function populateIpList(container, targetInput) {
+                const storedData = localStorage.getItem('networkTableEntries');
+                let entries = [
+                    { ip: "10.30.6.15", cidr: "/23", gateway: "10.30.6.1" },
+                    { ip: "10.30.6.65", cidr: "/23", gateway: "10.30.6.1" },
+                    { ip: "192.168.1.1", cidr: "/24", gateway: "192.168.1.254" }
+                ];
+                // If (storedData) entries = JSON.parse(storedData);
+
+                container.innerHTML = '';
+
+                if (entries.length === 0) {
+                    container.innerHTML = '<p>No entries found. Please add networks in the NETWORK-TABLE page.</p>';
+                    return;
+                }
+
+                entries.forEach(entry => {
+                    const item = document.createElement('div');
+                    item.className = 'ip-list-item';
+                    item.textContent = `${entry.ip} (${entry.cidr})`;
+                    item.dataset.ip = entry.ip;
+
+                    // 4. Set IP to Destination Input on Click
+                    item.addEventListener('click', () => {
+                        targetInput.value = item.dataset.ip;
+                        popup.classList.add('hidden');
+                    });
+
+                    container.appendChild(item);
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>
