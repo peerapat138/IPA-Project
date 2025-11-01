@@ -33,15 +33,10 @@
                         <label for="ping-command">Command:</label>
                         <select id="ping-command">
                             <option value="">-</option>
-                            <option value="-t">-t Ping until stopped.</option>
                             <option value="-n">-n count (Number of echo requests)</option>
                             <option value="-l">-l size (Send buffer size)</option>
                             <option value="-i">-i TTL (Time To Live)</option>
-                            <option value="-w">-w timeout (milliseconds)</option>
-                            <option value="-4">-4 Force using IPv4.</option>
-                            <option value="-6">-6 Force using IPv6.</option>
-                            <option value="-a">-a Resolve addresses to hostnames.</option>
-                            <option value="-f">-f Set Don't Fragment flag (IPv4-only). </option>
+                            <option value="-w">-w timeout (milliseconds)</option>                          
                         </select>
 
                         <input type="text" id="ping-param-input" class="command-param-input"
@@ -52,6 +47,7 @@
 
                     <div class="right">
                         <div class="console">
+                            Example Output:<br>
                             Pinging 192.168.1.1 with 32 bytes of data:<br>
                             Reply from 192.168.1.1: bytes=32 time&lt;1ms TTL=64<br>
                             Reply from 192.168.1.1: bytes=32 time&lt;1ms TTL=64<br>
@@ -83,79 +79,145 @@
         </div>
     </div>
     <script>
-        // Time Clock
-        setInterval(() => {
-            document.getElementById('clock').textContent = new Date().toLocaleTimeString();
-        }, 1000);
+    const API_BASE = "http://localhost:3000/api";
 
-        // --- PING Command Parameter Logic ---
-        document.addEventListener('DOMContentLoaded', () => {
-            const select = document.getElementById('ping-command');
-            const paramInput = document.getElementById('ping-param-input');
-            const optionsWithParam = ['-n', '-l', '-i', '-w', '-r', '-s', '-j', '-k', '-S'];
+    setInterval(() => {
+        document.getElementById('clock').textContent = new Date().toLocaleTimeString();
+    }, 1000);
 
-            if (select && paramInput) {
-                select.addEventListener('change', (e) => {
-                    const selectedValue = e.target.value;
-                    if (optionsWithParam.includes(selectedValue)) {
-                        paramInput.style.display = 'block';
-                        paramInput.placeholder = `Enter the value for ${selectedValue}`;
-                    } else {
-                        paramInput.style.display = 'none';
-                        paramInput.value = '';
-                    }
+    document.addEventListener('DOMContentLoaded', () => {
+    const select = document.getElementById('ping-command');
+    const paramInput = document.getElementById('ping-param-input');
+    const openTableBtn = document.querySelector('.small-btn');
+    const destinationInput = document.querySelector('.left input[type="text"]');
+    const popup = document.getElementById('nwtable-popup');
+    const closeBtn = document.getElementById('nwtable-cancel-btn');
+    const ipListContainer = document.getElementById('ip-list-container');
+    const pingBtn = document.querySelector(".btn");
+    const consoleBox = document.querySelector(".console");
+    
+    const optionsWithParam = ['-n', '-l', '-i', '-w'];
+
+    select.addEventListener('change', (e) => {
+        const selectedValue = e.target.value;
+        if (optionsWithParam.includes(selectedValue)) {
+            paramInput.style.display = 'block';
+            paramInput.placeholder = `Enter the value for ${selectedValue}`;
+        } else {
+            paramInput.style.display = 'none';
+            paramInput.value = '';
+        }
+    });
+
+    openTableBtn.addEventListener('click', async () => {
+        await populateIpList(ipListContainer, destinationInput);
+        popup.classList.remove('hidden');
+    });
+
+    closeBtn.addEventListener('click', () => popup.classList.add('hidden'));
+
+    async function populateIpList(container, targetInput) {
+    container.innerHTML = "<p>Loading...</p>";
+
+    try {
+        const res = await fetch(`${API_BASE}/networks`);
+        const data = await res.json();
+
+        if (!res.ok || !Array.isArray(data) || data.length === 0) {
+            container.innerHTML = '<p>No entries found. Please add networks in the NETWORK-TABLE page.</p>';
+            return;
+        }
+
+        container.innerHTML = ''; 
+
+        data.forEach(net => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'ip-list-item';
+
+            const title = document.createElement('div');
+            title.textContent = `🌐 ${net.network_name}`;
+            title.style.fontWeight = 'bold';
+            title.style.marginBottom = '4px';
+            wrapper.appendChild(title);
+
+            if (Array.isArray(net.ip_list) && net.ip_list.length > 0) {
+                const ipList = document.createElement('ul');
+                ipList.style.margin = '0';
+                ipList.style.paddingLeft = '20px';
+
+                net.ip_list.forEach(ip => {
+                    const li = document.createElement('li');
+                    li.textContent = ip;
+                    ipList.appendChild(li);
                 });
+                wrapper.appendChild(ipList);
+
+                wrapper.addEventListener('click', () => {
+                    const ipCombined = net.ip_list.map(ip => `${ip}`);
+                    targetInput.value = ipCombined.join(", ");
+                    popup.classList.add('hidden');
+                });
+            } else {
+                const noIp = document.createElement('p');
+                noIp.textContent = '(No IP entries)';
+                noIp.style.color = '#777';
+                wrapper.appendChild(noIp);
             }
 
-            // --- NETWORK TABLE POPUP Logic ---
-            const openTableBtn = document.querySelector('.small-btn');
-            const destinationInput = document.querySelector('.left input[type="text"]');
-            const popup = document.getElementById('nwtable-popup');
-            const closeBtn = document.getElementById('nwtable-cancel-btn');
-            const ipListContainer = document.getElementById('ip-list-container');
+            container.appendChild(wrapper);
+        });
+        } catch (err) {
+            container.innerHTML = `<p style="color:red">Failed to load data: ${err.message}</p>`;
+        }
+    }
 
-            // 1. Open Popup
-            openTableBtn.addEventListener('click', () => {
-                populateIpList(ipListContainer, destinationInput);
-                popup.classList.remove('hidden');
+    pingBtn.addEventListener("click", async () => {
+        const ipValue = destinationInput.value.trim();
+        const command = select.value;
+        const param = paramInput.value.trim();
+
+        if (!ipValue) {
+            alert("⚠️ กรุณากรอก IP Address ก่อน");
+            return;
+        }
+
+        let args = [];
+        if (command && param) args = [command, param];
+        const ipList = ipValue
+            .split(",")
+            .map(ip => ip.trim())
+            .filter(ip => ip.length > 0);
+        console.log(ipList);
+
+        consoleBox.innerHTML = "⏳ Running ping test...";
+
+        try {
+            const res = await fetch(`${API_BASE}/ping`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ip: ipList, rawArgs: args }),
             });
 
-            // 2. Close Popup
-            closeBtn.addEventListener('click', () => popup.classList.add('hidden'));
+            const data = await res.json();
 
-            // 3. Function to populate the IP list
-            function populateIpList(container, targetInput) {
-                const storedData = localStorage.getItem('networkTableEntries');
-                let entries = [
-                    { ip: "10.30.6.15", cidr: "/23", gateway: "10.30.6.1" },
-                    { ip: "10.30.6.65", cidr: "/23", gateway: "10.30.6.1" },
-                    { ip: "192.168.1.1", cidr: "/24", gateway: "192.168.1.254" }
-                ];
-                // If (storedData) entries = JSON.parse(storedData);
-
-                container.innerHTML = '';
-
-                if (entries.length === 0) {
-                    container.innerHTML = '<p>No entries found. Please add networks in the NETWORK-TABLE page.</p>';
-                    return;
-                }
-
-                entries.forEach(entry => {
-                    const item = document.createElement('div');
-                    item.className = 'ip-list-item';
-                    item.textContent = `${entry.ip} (${entry.cidr})`;
-                    item.dataset.ip = entry.ip;
-
-                    // 4. Set IP to Destination Input on Click
-                    item.addEventListener('click', () => {
-                        targetInput.value = item.dataset.ip;
-                        popup.classList.add('hidden');
-                    });
-
-                    container.appendChild(item);
-                });
+            if (res.ok && data.results && data.results.length > 0) {
+                consoleBox.innerHTML = data.results.map((result, index) => `
+                    <div style="margin-bottom: 10px; border-bottom: 1px dashed #aaa; padding-bottom: 8px;">
+                        <b>#${index + 1}</b><br>
+                        <b>Target:</b> ${result.target || result.input}<br>
+                        <b>Mask:</b> ${result.mask || "-"}<br>
+                        <b>Status:</b> ${result.success ? "✅ Success" : "❌ Failed"}<br>
+                        <pre>${result.result}</pre>
+                    </div>
+                `).join("");
+            } else {
+                consoleBox.innerHTML = `<span style="color:red">Error: ${data.error || "Unknown error"}</span>`;
             }
-        });
+        } catch (err) {
+            consoleBox.innerHTML = `<span style="color:red">Request failed: ${err.message}</span>`;
+        }
+    });
+});
     </script>
 </body>
 
