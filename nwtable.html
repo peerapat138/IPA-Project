@@ -1,221 +1,232 @@
 <!doctype html>
 <html lang="th">
-
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Network Tester - Network Table</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Network Tester - Network Table</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    <div class="frame">
-        <nav>
-            <a href="index.html">HOME</a>
-            <a href="ping.html">PING</a>
-            <a href="traceroute.html">TRACEROUTE</a>
-            <a href="dns.html">DNS</a>
-            <a class="active" href="nwtable.html">NETWORK-TABLE</a>
-        </nav>
+  <div class="frame">
+    <nav>
+      <a href="index.html">HOME</a>
+      <a href="ping.html">PING</a>
+      <a href="traceroute.html">TRACEROUTE</a>
+      <a href="dns.html">DNS</a>
+      <a class="active" href="nwtable.html">NETWORK-TABLE</a>
+    </nav>
 
-        <div class="content page">
-            <div class="box">
-                <h2 class="title">NETWORK-TABLE</h2>
-                <hr class="line">
+    <div class="content page">
+      <div class="box">
+        <h2 class="title">NETWORK-TABLE</h2>
+        <hr class="line">
 
-                <main class="content">
-                    <div class="network-container" id="network-table-entries">
-
-                        <!-- Master Subnet -->
-                        <div class="network-item" data-subnet-id="10.30.6.0/23">
-                            <div class="network-header">
-                                <span>10.30.6.0/23</span>
-                                <button class="toggle">∧</button>
-                            </div>
-                        </div>
-
-                        <!-- Detail IPs -->
-                        <div class="network-item detail" data-ip="10.30.6.15/23" data-subnet-id="10.30.6.0/23">
-                            <div class="network-header">
-                                <span>10.30.6.15/23</span>
-                                <button class="remove">—</button>
-                            </div>
-                        </div>
-
-                        <div class="network-item detail" data-ip="10.30.6.65/23" data-subnet-id="10.30.6.0/23">
-                            <div class="network-header">
-                                <span>10.30.6.65/23</span>
-                                <button class="remove">—</button>
-                            </div>
-                        </div>
-
-                        <button id="open-popup" class="open-popup">+ Add Network Table</button>
-                    </div>
-                </main>
-            </div>
-        </div>
+        <main class="content">
+          <div class="network-container" id="network-table-entries">
+            <button id="open-popup" class="open-popup">+ Add Network Table</button>
+          </div>
+        </main>
+      </div>
     </div>
+  </div>
 
-    <!-- POPUP -->
-    <div class="popup hidden" id="popup">
-        <div class="popup-box">
-            <h2>Add Network Table</h2>
-            <form id="add-network-form">
-                <label>Table Name:</label>
-                <input type="text" id="ip-input" placeholder="e.g. 10.30.6.10" required>
-
-                <button class="add" id="add-btn">ADD</button>
-                <button class="close" id="cancel-btn">CANCEL</button>
-            </form>
-        </div>
+  <div class="popup hidden" id="popup-network">
+    <div class="popup-box">
+      <h2>Add Network Table</h2>
+      <form id="add-network-form">
+        <label>Network Name:</label>
+        <input type="text" id="network-input" placeholder="e.g. 10.30.6.0/23" required>
+        <button class="add">ADD</button>
+        <button class="close" id="cancel-network">CANCEL</button>
+      </form>
     </div>
+  </div>
 
-    <script>
-        function calculateSubnetId(ip, cidr) {
-            // ฟังก์ชันเดิมของคุณในการคำนวณ Subnet ID
-            if (ip.startsWith('10.30.6.')) {
-                return `10.30.6.0/${cidr}`;
+  <div class="popup hidden" id="popup-ip">
+    <div class="popup-box">
+      <h2>Add IP Address</h2>
+      <form id="add-ip-form">
+        <input type="hidden" id="current-network-id">
+        <label>IP Address:</label>
+        <input type="text" id="ip-input" placeholder="e.g. 10.30.6.10" required>
+        <label>Subnet:</label>
+        <input type="text" id="subnet-input" placeholder="e.g. /24" required>
+        <button class="add">ADD</button>
+        <button class="close" id="cancel-ip">CANCEL</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "http://localhost:3000/api";
+
+    const createElementFromHTML = (htmlString) => {
+      const div = document.createElement("div");
+      div.innerHTML = htmlString.trim();
+      return div.firstChild;
+    };
+
+    async function fetchJSON(url) {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return await res.json();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const popupNetwork = document.getElementById("popup-network");
+      const popupIP = document.getElementById("popup-ip");
+      const openPopupBtn = document.getElementById("open-popup");
+      const cancelNetwork = document.getElementById("cancel-network");
+      const cancelIP = document.getElementById("cancel-ip");
+      const addNetworkForm = document.getElementById("add-network-form");
+      const addIPForm = document.getElementById("add-ip-form");
+      const container = document.getElementById("network-table-entries");
+      const ipInput = document.getElementById("ip-input");
+      const currentNetworkId = document.getElementById("current-network-id");
+
+      openPopupBtn.addEventListener("click", () => popupNetwork.classList.remove("hidden"));
+      cancelNetwork.addEventListener("click", (e) => {
+        e.preventDefault();
+        popupNetwork.classList.add("hidden");
+        addNetworkForm.reset();
+      });
+      cancelIP.addEventListener("click", (e) => {
+        e.preventDefault();
+        popupIP.classList.add("hidden");
+        addIPForm.reset();
+      });
+      window.addEventListener("click", (e) => {
+        if (e.target === popupNetwork) popupNetwork.classList.add("hidden");
+        if (e.target === popupIP) popupIP.classList.add("hidden");
+      });
+
+      // === TOGGLE SUBNET ===
+      async function toggleSubnet(btn) {
+        const master = btn.closest(".network-item");
+        const networkId = master.dataset.networkId;
+        const isCollapsed = btn.textContent === "∨";
+
+        if (isCollapsed) {
+            const ips = await fetchJSON(`${API_BASE}/ips/${networkId}`);
+
+            document.querySelectorAll(`.network-item.detail[data-network-id="${networkId}"]`)
+            .forEach(d => d.remove());
+
+            for (const ip of ips) {
+            const ipHTML = `
+                <div class="network-item detail" data-network-id="${networkId}">
+                <div class="network-header">
+                    <span>${ip.ip_address}</span>
+                    <button class="remove">—</button>
+                </div>
+                </div>`;
+            const ipEl = createElementFromHTML(ipHTML);
+            master.insertAdjacentElement("afterend", ipEl);
+            attachRemoveListener(ipEl.querySelector(".remove"), ip.entry_id, networkId);
             }
-            return `${ip.substring(0, ip.lastIndexOf('.'))}.0/${cidr}`;
+        } else {
+            document.querySelectorAll(`.network-item.detail[data-network-id="${networkId}"]`)
+            .forEach(d => d.remove());
         }
 
-        // ฟังก์ชันช่วยสร้าง Element จาก HTML String
-        function createElementFromHTML(htmlString) {
-            const div = document.createElement('div');
-            div.innerHTML = htmlString.trim();
-            return div.firstChild;
+        btn.textContent = isCollapsed ? "∧" : "∨";
         }
 
-        document.addEventListener("DOMContentLoaded", () => {
-            const popup = document.getElementById("popup");
-            const openPopupBtn = document.getElementById("open-popup");
-            const cancelBtn = document.getElementById("cancel-btn");
-            const addForm = document.getElementById("add-network-form");
-            const container = document.getElementById("network-table-entries");
 
-            // --- 1. POPUP Handlers ---
-            openPopupBtn.addEventListener("click", () => popup.classList.remove("hidden"));
-            cancelBtn.addEventListener("click", (e) => {
-                e.preventDefault();
-                popup.classList.add("hidden");
-                addForm.reset();
-            });
+      function attachToggleListener(btn) {
+        btn.addEventListener("click", () => toggleSubnet(btn));
+      }
 
-            window.addEventListener('click', (event) => {
-                if (event.target === popup) {
-                    popup.classList.add('hidden');
-                    addForm.reset();
-                }
-            });
-
-            // --- 2. Toggle/Remove Helper Functions ---
-
-            // ตรวจสอบและลบ Master Subnet หากไม่มี Detail IPs เหลืออยู่
-            const removeMasterIfEmpty = (subnetId) => {
-                // ค้นหา Detail IP ที่เหลือทั้งหมดสำหรับ Subnet ID นี้
-                const remainingDetails = document.querySelectorAll(`.network-item.detail[data-subnet-id="${subnetId}"]`);
-
-                if (remainingDetails.length === 0) {
-                    // ถ้าไม่เหลือ Detail IP แล้ว ให้ค้นหาและลบ Master Entry
-                    const masterEntry = document.querySelector(`.network-item[data-subnet-id="${subnetId}"]:not(.detail)`);
-                    if (masterEntry) {
-                        masterEntry.remove();
-                    }
-                }
-            };
-
-            // ฟังก์ชัน Toggle (ยุบ/ขยาย)
-            const toggleSubnet = (masterBtn) => {
-                const masterEntry = masterBtn.closest('.network-item');
-                const subnetId = masterEntry.dataset.subnetId;
-                const isCollapsed = masterBtn.textContent === '∨'; // ตรวจสอบสถานะก่อนเปลี่ยน
-
-                document.querySelectorAll(`.network-item.detail[data-subnet-id="${subnetId}"]`).forEach(detail => {
-                    // ถ้า isCollapsed เป็นจริง (∨) แสดงว่าต้องขยาย ก็ให้แสดง ('' คือค่า default/empty)
-                    // ถ้า isCollapsed เป็นเท็จ (∧) แสดงว่าต้องยุบ ก็ให้ซ่อน ('none')
-                    detail.style.display = isCollapsed ? '' : 'none';
-                });
-                masterBtn.textContent = isCollapsed ? '∧' : '∨';
-                masterEntry.classList.toggle('collapsed', !isCollapsed);
-            };
-
-            // ฟังก์ชันผูก Event Listener สำหรับ Toggle
-            const attachToggleListener = (btn) => btn.addEventListener('click', () => toggleSubnet(btn));
-
-            // ฟังก์ชันผูก Event Listener สำหรับ Remove (ที่แก้ไขแล้ว)
-            const attachRemoveListener = (btn) => {
-                btn.addEventListener('click', () => {
-                    const detailEntry = btn.closest('.network-item.detail');
-                    if (detailEntry) {
-                        const subnetId = detailEntry.dataset.subnetId;
-
-                        // 1. ลบรายการ Detail IP
-                        detailEntry.remove();
-
-                        // 2. ตรวจสอบและลบ Master Subnet หากไม่มี Detail IPs เหลือแล้ว
-                        removeMasterIfEmpty(subnetId);
-                    }
-                });
-            };
-
-            // --- 3. Initial Setup and Add Network Logic ---
-
-            // ผูก Listener ให้กับรายการที่มีอยู่แล้วใน HTML
-            document.querySelectorAll('.network-item .toggle').forEach(attachToggleListener);
-            document.querySelectorAll('.network-item.detail .remove').forEach(attachRemoveListener);
-
-            // Add Network Entry
-            addForm.addEventListener('submit', (event) => {
-                event.preventDefault();
-                const ip = document.getElementById('ip-input').value;
-                const subnet = document.getElementById('subnet-input').value.replace('/', '');
-                const subnetId = calculateSubnetId(ip, subnet);
-
-                // 1. Check/Create Master Subnet
-                let masterEntry = document.querySelector(`.network-item[data-subnet-id="${subnetId}"]:not(.detail)`);
-                if (!masterEntry) {
-                    const newMasterHTML = `
-            <div class="network-item" data-subnet-id="${subnetId}">
-              <div class="network-header">
-                <span>${subnetId}</span>
-                <button class="toggle">∧</button>
-              </div>
-            </div>`;
-                    // แทรก Master Entry ก่อนปุ่ม '+'
-                    container.insertBefore(createElementFromHTML(newMasterHTML), openPopupBtn);
-
-                    // ค้นหารายการที่เพิ่งสร้างและผูก Listener
-                    masterEntry = document.querySelector(`.network-item[data-subnet-id="${subnetId}"]:not(.detail)`);
-                    attachToggleListener(masterEntry.querySelector('.toggle'));
-                }
-
-                // 2. Create and Insert Detail IP
-                const newDetailHTML = `
-          <div class="network-item detail" data-ip="${ip}/${subnet}" data-subnet-id="${subnetId}">
-            <div class="network-header">
-              <span>${ip}/${subnet}</span>
-              <button class="remove">—</button>
-            </div>
-          </div>`;
-
-                // ค้นหาตำแหน่งแทรก (แทรกต่อจากรายการสุดท้ายในกลุ่ม)
-                let nextElement = masterEntry.nextElementSibling;
-                while (nextElement && nextElement.classList.contains('detail') && nextElement.dataset.subnetId === subnetId) {
-                    nextElement = nextElement.nextElementSibling;
-                }
-                // แทรก Detail Entry ก่อน nextElement (ซึ่งอาจจะเป็นรายการ Master อื่น หรือปุ่ม '+')
-                const newDetailEntry = createElementFromHTML(newDetailHTML);
-                container.insertBefore(newDetailEntry, nextElement);
-
-                // ผูก Listener ให้กับปุ่ม Remove ที่เพิ่งสร้าง
-                attachRemoveListener(newDetailEntry.querySelector('.remove'));
-
-                // 3. Close Popup
-                popup.classList.add("hidden");
-                addForm.reset();
-            });
+      function attachRemoveListener(btn, id, networkId) {
+        btn.addEventListener("click", async () => {
+          await fetch(`${API_BASE}/ips/${id}`, { method: "DELETE" });
+          btn.closest(".network-item.detail").remove();
+          const remain = document.querySelectorAll(`.network-item.detail[data-network-id="${networkId}"]`);
+          if (remain.length === 0) {
+            document.querySelector(`.network-item[data-network-id="${networkId}"]:not(.detail)`).remove();
+          }
         });
-    </script>
-</body>
+      }
 
+      function attachAddIPListener(btn, networkId) {
+        btn.addEventListener("click", () => {
+          popupIP.classList.remove("hidden");
+          currentNetworkId.value = networkId;
+        });
+      }
+
+      async function loadNetworks() {
+        container.querySelectorAll(".network-item").forEach(e => e.remove());
+        const networks = await fetchJSON(`${API_BASE}/networks`);
+
+        for (const net of networks) {
+            const masterHTML = `
+            <div class="network-item" data-network-id="${net.network_id}">
+                <div class="network-header">
+                <span>${net.network_name}</span>
+                <div class="actions">
+                    <button class="toggle">∨</button>
+                    <button class="add-ip">+</button>
+                </div>
+                </div>
+            </div>`;
+            const master = createElementFromHTML(masterHTML);
+            container.insertBefore(master, openPopupBtn);
+
+            attachToggleListener(master.querySelector(".toggle"));
+            attachAddIPListener(master.querySelector(".add-ip"), net.network_id);
+        }
+        }
+
+
+      addNetworkForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const name = document.getElementById("network-input").value.trim();
+        if (!name) return;
+        const res = await fetch(`${API_BASE}/networks`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ network_name: name })
+        });
+        if (res.ok) {
+          popupNetwork.classList.add("hidden");
+          addNetworkForm.reset();
+          await loadNetworks();
+        } else {
+          const err = await res.json();
+          alert(err.error || "Error adding network");
+        }
+      });
+
+      addIPForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const ip = document.getElementById("ip-input").value.trim();
+        const subnet = document.getElementById("subnet-input").value.trim();
+        const networkId = currentNetworkId.value;
+        if (!ip || !subnet) return;
+
+        const ipFull = `${ip}${subnet.startsWith("/") ? subnet : "/" + subnet}`;
+
+        const res = await fetch(`${API_BASE}/ips`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ network_id: networkId, ip_address: ipFull })
+        });
+
+        if (res.ok) {
+            popupIP.classList.add("hidden");
+            addIPForm.reset();
+            await loadNetworks();
+        } else {
+            alert("Error adding IP");
+        }
+        });
+
+      loadNetworks();
+    });
+  </script>
+
+ 
+</body>
 </html>
