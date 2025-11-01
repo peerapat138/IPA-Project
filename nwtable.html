@@ -101,7 +101,6 @@
         if (e.target === popupIP) popupIP.classList.add("hidden");
       });
 
-      // === TOGGLE SUBNET ===
       async function toggleSubnet(btn) {
         const master = btn.closest(".network-item");
         const networkId = master.dataset.networkId;
@@ -168,6 +167,7 @@
                 <div class="actions">
                     <button class="toggle">∨</button>
                     <button class="add-ip">+</button>
+                    <button class="remove-network">—</button>
                 </div>
                 </div>
             </div>`;
@@ -176,9 +176,23 @@
 
             attachToggleListener(master.querySelector(".toggle"));
             attachAddIPListener(master.querySelector(".add-ip"), net.network_id);
+            attachRemoveNetworkListener(master.querySelector(".remove-network"), net.network_id);
         }
-        }
+      }
+      function attachRemoveNetworkListener(btn, networkId) {
+        btn.addEventListener("click", async () => {
+            if (!confirm("ต้องการลบ Network นี้จริงหรือไม่?")) return;
 
+            const res = await fetch(`${API_BASE}/networks/${networkId}`, { method: "DELETE" });
+            if (res.ok) {
+            document.querySelector(`.network-item[data-network-id="${networkId}"]:not(.detail)`)?.remove();
+            document.querySelectorAll(`.network-item.detail[data-network-id="${networkId}"]`)
+                .forEach(e => e.remove());
+            } else {
+            alert("Error deleting network");
+            }
+        });
+    }
 
       addNetworkForm.addEventListener("submit", async (e) => {
         e.preventDefault();
