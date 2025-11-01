@@ -49,7 +49,7 @@
                             </div>
                         </div>
 
-                        <button id="open-popup" class="open-popup">+</button>
+                        <button id="open-popup" class="open-popup">+ Add Network Table</button>
                     </div>
                 </main>
             </div>
@@ -59,16 +59,10 @@
     <!-- POPUP -->
     <div class="popup hidden" id="popup">
         <div class="popup-box">
-            <h2>Add Network</h2>
+            <h2>Add Network Table</h2>
             <form id="add-network-form">
-                <label>IP Address:</label>
+                <label>Table Name:</label>
                 <input type="text" id="ip-input" placeholder="e.g. 10.30.6.10" required>
-
-                <label>Subnet (CIDR):</label>
-                <input type="text" id="subnet-input" placeholder="/23" required>
-
-                <label>Gateway:</label>
-                <input type="text" id="gateway-input" placeholder="10.30.6.1" required>
 
                 <button class="add" id="add-btn">ADD</button>
                 <button class="close" id="cancel-btn">CANCEL</button>
