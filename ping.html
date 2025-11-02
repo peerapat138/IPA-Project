@@ -47,17 +47,7 @@
 
                     <div class="right">
                         <div class="console">
-                            Example Output:<br>
-                            Pinging 192.168.1.1 with 32 bytes of data:<br>
-                            Reply from 192.168.1.1: bytes=32 time&lt;1ms TTL=64<br>
-                            Reply from 192.168.1.1: bytes=32 time&lt;1ms TTL=64<br>
-                            Reply from 192.168.1.1: bytes=32 time&lt;1ms TTL=64<br>
-                            Reply from 192.168.1.1: bytes=32 time&lt;1ms TTL=64<br>
-                            <br>
-                            Ping statistics for 192.168.1.1:<br>
-                            Packets: Sent = 4, Received = 4, Lost = 0 (0% loss)<br>
-                            Approximate round trip times in milli-seconds:<br>
-                            Minimum = 0ms, Maximum = 0ms, Average = 0ms<br>
+                            Output Console:<br>
                         </div>
                     </div>
                 </div>
@@ -195,7 +185,7 @@
             const res = await fetch(`${API_BASE}/ping`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ip: ipList, rawArgs: args }),
+                body: JSON.stringify({ targets: ipList, rawArgs: args }),
             });
 
             const data = await res.json();
