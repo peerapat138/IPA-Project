@@ -50,8 +50,6 @@
         <input type="hidden" id="current-network-id">
         <label>IP Address:</label>
         <input type="text" id="ip-input" placeholder="e.g. 10.30.6.10" required>
-        <label>Subnet:</label>
-        <input type="text" id="subnet-input" placeholder="e.g. /24" required>
         <button class="add">ADD</button>
         <button class="close" id="cancel-ip">CANCEL</button>
       </form>
@@ -138,15 +136,30 @@
       }
 
       function attachRemoveListener(btn, id, networkId) {
-        btn.addEventListener("click", async () => {
-          await fetch(`${API_BASE}/ips/${id}`, { method: "DELETE" });
-          btn.closest(".network-item.detail").remove();
-          const remain = document.querySelectorAll(`.network-item.detail[data-network-id="${networkId}"]`);
-          if (remain.length === 0) {
-            document.querySelector(`.network-item[data-network-id="${networkId}"]:not(.detail)`).remove();
-          }
+        btn.addEventListener("click", async (event) => {
+            event.preventDefault(); 
+
+            try {
+            const res = await fetch(`${API_BASE}/ips/${id}`, { method: "DELETE" });
+            if (!res.ok) throw new Error("Failed to delete IP");
+
+            btn.closest(".network-item.detail").remove();
+
+            const remain = document.querySelectorAll(`.network-item.detail[data-network-id="${networkId}"]`);
+            if (remain.length === 0) {
+                document
+                .querySelector(`.network-item[data-network-id="${networkId}"]:not(.detail)`)
+                ?.remove();
+            }
+
+            alert("✅ ลบ IP สำเร็จ");
+
+            } catch (err) {
+            console.error(err);
+            alert("❌ ลบ IP ไม่สำเร็จ");
+            }
         });
-      }
+        }
 
       function attachAddIPListener(btn, networkId) {
         btn.addEventListener("click", () => {
@@ -216,26 +229,36 @@
       addIPForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         const ip = document.getElementById("ip-input").value.trim();
-        const subnet = document.getElementById("subnet-input").value.trim();
         const networkId = currentNetworkId.value;
-        if (!ip || !subnet) return;
+        if (!ip) return;
 
-        const ipFull = `${ip}${subnet.startsWith("/") ? subnet : "/" + subnet}`;
+        try {
+            const res = await fetch(`${API_BASE}/ips`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ network_id: networkId, ip_address: ip })
+            });
 
-        const res = await fetch(`${API_BASE}/ips`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ network_id: networkId, ip_address: ipFull })
-        });
+            const data = await res.json();
 
-        if (res.ok) {
+            if (res.ok) {
+            alert(`✅ เพิ่ม IP ${ip} สำเร็จ`);
             popupIP.classList.add("hidden");
             addIPForm.reset();
-            await loadNetworks();
-        } else {
-            alert("Error adding IP");
-        }
-        });
+
+            const toggleBtn = document.querySelector(`.network-item[data-network-id="${networkId}"] .toggle`);
+            if (toggleBtn && toggleBtn.textContent === "∧") {
+                await toggleSubnet(toggleBtn);
+                toggleBtn.textContent = "∧";
+            }
+            } else {
+            alert(`❌ เพิ่ม IP ไม่สำเร็จ: ${data.error || "Unknown error"}`);
+            }
+            } catch (err) {
+                alert(`⚠️ Request failed: ${err.message}`);
+            }
+            });
+
 
       loadNetworks();
     });

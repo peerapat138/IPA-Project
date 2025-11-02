@@ -212,8 +212,9 @@ option{
   border-radius: 10px;
   font-family: 'Courier New', monospace;
   color: #00ffff;
-  height: 250px;
+  height: 300px;
   overflow-y: auto;
+  overflow-x: hidden;
   text-align: left;
   padding: 10px;
 }
