@@ -9,124 +9,263 @@
 </head>
 
 <body>
-    <div class="frame">
-        <nav>
-            <a href="index.html">HOME</a>
-            <a href="ping.html">PING</a>
-            <a href="traceroute.html">TRACEROUTE</a>
-            <a class="active" href="dns.html">DNS</a>
-            <a href="nwtable.html">NETWORK-TABLE</a>
-        </nav>
+<div class="frame">
+    <nav>
+        <a href="index.html">HOME</a>
+        <a href="ping.html">PING</a>
+        <a href="traceroute.html">TRACEROUTE</a>
+        <a class="active" href="dns.html">DNS</a>
+        <a href="nwtable.html">NETWORK-TABLE</a>
+    </nav>
 
-        <div class="content page">
-            <div class="box">
-                <h2 class="title">DNS LOOKUP</h2>
-                <hr class="line">
+    <div class="content page">
+        <div class="box">
+            <h2 class="title">DNS LOOKUP</h2>
+            <hr class="line">
 
-                <div class="container">
-                    <div class="left">
-                        <h3>DESTINATION CONTROL</h3>
-                        <label>Domain Name:</label>
-                        <input type="text" placeholder="example.com">
-                        <button class="small-btn">USE NETWORK-TABLE</button>
+            <div class="container">
+                <div class="left">
+                    <h3>DESTINATION CONTROL</h3>
+                    <label>Domain Name:</label>
+                    <input type="text" id="domain-input" placeholder="example.com">
+                    <button class="small-btn" id="open-nwtable">USE NETWORK-TABLE</button>
 
-                        <label for="dns-type">Type:</label>
-                        <select id="dns-type">
-                            <option value="">-</option>
-                            <option value="A">A (IPv4 Address)</option>
-                            <option value="AAAA">AAAA (IPv6 Address)</option>
-                            <option value="MX">MX (Mail Server)</option>
-                            <option value="NS">NS (Name Server)</option>
-                            <option value="CNAME">CNAME (Canonical Name)</option>
-                            <option value="PTR">PTR (Pointer Record / Reverse DNS)</option>
-                            <option value="SOA">SOA (Start of Authority)</option>
-                            <option value="TXT">TXT (Text Record)</option>
-                            <option value="ANY">ANY (All Records)</option>
-                        </select>
+                    <label for="dns-type">Type:</label>
+                    <select id="dns-type">
+                        <option value="">A (default)</option>
+                        <option value="AAAA">AAAA (IPv6 Address)</option>
+                        <option value="MX">MX (Mail Server)</option>
+                        <option value="NS">NS (Name Server)</option>
+                        <option value="CNAME">CNAME (Canonical Name)</option>
+                        <option value="PTR">PTR (Pointer Record / Reverse DNS)</option>
+                        <option value="TXT">TXT (Text Record)</option>
+                        <option value="ANY">ANY (All Records)</option>
+                    </select>
 
-
-                        <button class="btn">RESOLVE</button>
-                    </div>
-
-                    <div class="right">
-                        <div class="console">
-                            Resolving example.com:<br>
-                            Name: example.com<br>
-                            Addresses: 93.184.216.34<br>
-                            TTL: 3600<br>
-                        </div>
-                    </div>
+                    <button class="btn" id="resolve-btn">RESOLVE</button>
                 </div>
 
-                <div class="time">
-                    TIME: <span id="clock">12:45:51</span>
+                <div class="right">
+                    <div class="console" id="dns-console">
+                        Ready to resolve...
+                    </div>
                 </div>
+            </div>
+
+            <div class="time">
+                TIME: <span id="clock">12:45:51</span>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- POPUP NETWORK TABLE -->
-    <div class="popup-nwtable hidden" id="nwtable-popup">
-        <div class="popup-box">
-            <h2>Select Destination from Network-Table</h2>
-            <div class="ip-list-container" id="ip-list-container">
-                <p>No entries found. Please add networks in the NETWORK-TABLE page.</p>
-            </div>
-            <button class="pop_clos" id="nwtable-cancel-btn">CLOSE</button>
+<!-- POPUP NETWORK TABLE -->
+<div class="popup-nwtable hidden" id="nwtable-popup">
+    <div class="popup-box">
+        <h2>Select Destination from Network-Table</h2>
+        <div class="ip-list-container" id="ip-list-container">
+            <p>No entries found. Please add networks in the NETWORK-TABLE page.</p>
         </div>
+        <button class="pop_clos" id="nwtable-cancel-btn">CLOSE</button>
     </div>
+</div>
 
-    <script>
-        // Time Clock
-        setInterval(() => {
-            document.getElementById('clock').textContent = new Date().toLocaleTimeString();
-        }, 1000);
+<script>
+const API_BASE = window.api_base || "http://localhost:3000/api";
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const openTableBtn = document.querySelector('.small-btn');
-            const domainInput = document.querySelector('.left input[type="text"]');
-            const popup = document.getElementById('nwtable-popup');
-            const closeBtn = document.getElementById('nwtable-cancel-btn');
-            const ipListContainer = document.getElementById('ip-list-container');
+// Clock
+setInterval(() => {
+    document.getElementById('clock').textContent = new Date().toLocaleTimeString();
+}, 1000);
 
-            // เปิด popup
-            openTableBtn.addEventListener('click', () => {
-                populateIpList(ipListContainer, domainInput);
-                popup.classList.remove('hidden');
-            });
+document.addEventListener('DOMContentLoaded', () => {
+    const domainInput = document.getElementById('domain-input');
+    const typeSelect = document.getElementById('dns-type');
+    const resolveBtn = document.getElementById('resolve-btn');
+    const consoleBox = document.getElementById('dns-console');
 
-            // ปิด popup
-            closeBtn.addEventListener('click', () => popup.classList.add('hidden'));
+    const openTableBtn = document.getElementById('open-nwtable');
+    const popup = document.getElementById('nwtable-popup');
+    const closeBtn = document.getElementById('nwtable-cancel-btn');
+    const ipListContainer = document.getElementById('ip-list-container');
 
-            function populateIpList(container, targetInput) {
-                const entries = [
-                    { ip: "10.30.6.15", cidr: "/23", gateway: "10.30.6.1" },
-                    { ip: "10.30.6.65", cidr: "/23", gateway: "10.30.6.1" },
-                    { ip: "192.168.1.1", cidr: "/24", gateway: "192.168.1.254" }
-                ];
+    openTableBtn.addEventListener('click', async () => {
+        await populateIpList(ipListContainer, domainInput);
+        popup.classList.remove('hidden');
+    });
 
-                container.innerHTML = '';
+    closeBtn.addEventListener('click', () => popup.classList.add('hidden'));
 
-                if (entries.length === 0) {
-                    container.innerHTML = '<p>No entries found. Please add networks in the NETWORK-TABLE page.</p>';
-                    return;
-                }
-                entries.forEach(entry => {
-                    const item = document.createElement('div');
-                    item.className = 'ip-list-item';
-                    item.textContent = `${entry.ip} (${entry.cidr})`;
-                    item.dataset.ip = entry.ip;
+    async function populateIpList(container, targetInput) {
+        container.innerHTML = "<p>Loading...</p>";
 
-                    item.addEventListener('click', () => {
-                        targetInput.value = item.dataset.ip;
+        try {
+            const res = await fetch(`${API_BASE}/networks`);
+            const data = await res.json();
+
+            if (!res.ok || !Array.isArray(data) || data.length === 0) {
+                container.innerHTML = '<p>No entries found. Please add networks in the NETWORK-TABLE page.</p>';
+                return;
+            }
+
+            container.innerHTML = '';
+
+            data.forEach(net => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'ip-list-item';
+
+                const title = document.createElement('div');
+                title.textContent = `🌐 ${net.network_name}`;
+                title.style.fontWeight = 'bold';
+                title.style.marginBottom = '4px';
+                wrapper.appendChild(title);
+
+                if (Array.isArray(net.ip_list) && net.ip_list.length > 0) {
+                    const ipList = document.createElement('ul');
+                    ipList.style.margin = '0';
+                    ipList.style.paddingLeft = '20px';
+
+                    net.ip_list.forEach(ip => {
+                        const li = document.createElement('li');
+                        li.textContent = ip;
+                        ipList.appendChild(li);
+                    });
+                    wrapper.appendChild(ipList);
+
+                    wrapper.addEventListener('click', () => {
+                        const ipCombined = net.ip_list.map(ip => `${ip}`);
+                        targetInput.value = ipCombined.join(", ");
                         popup.classList.add('hidden');
                     });
+                } else {
+                    const noIp = document.createElement('p');
+                    noIp.textContent = '(No IP entries)';
+                    noIp.style.color = '#777';
+                    wrapper.appendChild(noIp);
+                }
 
-                    container.appendChild(item);
-                });
+                container.appendChild(wrapper);
+            });
+        } catch (err) {
+            container.innerHTML = `<p style="color:red">Failed to load data: ${err.message}</p>`;
+        }
+    }
+
+    resolveBtn.addEventListener('click', async () => {
+        const hostValue = domainInput.value.trim();
+        const typeValue = typeSelect.value || "A";
+
+        if (!hostValue) {
+            alert("⚠️ กรุณากรอก Domain Name");
+            return;
+        }
+
+        // แปลง input เป็น array
+        let hostArray = hostValue.split(",").map(s => s.trim()).filter(s => s.length > 0);
+
+        if (typeValue === "NS" || typeValue === "TXT" || typeValue === "MX") {
+            console.log("NS type detected. Stripping 'www.' from hostnames...");
+            hostArray = hostArray.map(host => host.replace(/^www\./i, ""));
+        }
+
+        consoleBox.innerHTML = "⏳ Resolving DNS...";
+
+        try {
+            const res = await fetch(`${API_BASE}/resolve`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ hostnames: hostArray, type: typeValue })
+            });
+
+            const data = await res.json();
+
+            if (res.ok && data.results && data.results.length > 0) {
+                consoleBox.innerHTML = data.results.map((result, index) => {
+                let output = "";
+                let isTxtRecord = false;
+
+                if (Array.isArray(result.addresses)) {
+                    if (result.type === "MX") {
+                        output = result.addresses
+                            .map(a => `${a.exchange} (priority ${a.priority})`)
+                            .join("\n");
+                    }
+                    else if (result.type === "TXT") {
+                            isTxtRecord = true; 
+                            output = result.addresses.map(a => {
+                                const recordString = a.join ? a.join(" ") : a;
+                                return `<div style="
+                                    background: rgba(0,0,0,0.2); 
+                                    border-left: 3px solid #00ffff; 
+                                    padding: 5px 8px; 
+                                    margin-top: 5px; 
+                                    white-space: pre-wrap; 
+                                    word-break: break-all;
+                                ">${recordString}</div>`;
+                            }).join(""); 
+                        }
+                    else if (result.type === "NS") {
+                        console.log(result)
+                        output = result.addresses
+                            .map(a => {
+                                const str = typeof a === "string" ? a : a.host || String(a);
+                                return str.replace(/^www\./i, "");
+                            })
+                            .join("\n");
+                    } else if (result.type === "CNAME" || result.type === "PTR") {
+                        output = result.addresses.join("\n");
+                    } else if (result.type === "ANY") {
+                        isTxtRecord = true;
+                        output = result.addresses.map(a => {
+                            switch (a.type) {
+                                case 'A':
+                                case 'AAAA':
+                                    return `(${a.type}) ${a.address}`;
+                                case 'MX':
+                                    return `(${a.type}) ${a.exchange} (Prio: ${a.priority})`;
+                                case 'NS':
+                                case 'CNAME':
+                                case 'PTR':
+                                    return `(${a.type}) ${a.value}`;
+                                case 'TXT':
+                                    return `(${a.type}) "${a.entries.join(' ')}"`;
+                                case 'SOA':
+                                    return `(${a.type}) ${a.nsname}`;
+                                default:
+                                    return `(${a.type}) [object Object]`;
+                            }
+                            return `<div style="background: rgba(0,0,0,0.2); border-left: 3px solid #00ffff; padding: 5px 8px; margin-top: 5px; white-space: pre-wrap; word-break: break-all;">${recordString}</div>`;
+                        }).join("\n");
+                    } else {
+                        output = result.addresses.join("\n");
+                    }
+                } else {
+                    output = result.error || "-";
+                }
+
+               return `
+                    <div style="margin-bottom: 10px; border-bottom: 1px dashed #aaa; padding-bottom: 8px;">
+                        <b>#${index + 1}</b><br>
+                        <b>Host:</b> ${result.host}<br>
+                        <b>Domain:</b> ${result.domain || "-"}<br>
+                        <b>Type:</b> ${result.type}<br>
+                        <b>Status:</b> ${result.success ? "✅ Success" : "❌ Failed"}<br>
+                        
+                        ${isTxtRecord
+                            ? `<div>Output: ${output}</div>`
+                            : `<pre>Output: ${output}</pre>`
+                        }
+                    </div>
+                `;
+            }).join("");
+            } else {
+                consoleBox.innerHTML = `<span style="color:red">Error: ${data.error || "Unknown error"}</span>`;
             }
-        });
-    </script>
+        } catch (err) {
+            consoleBox.innerHTML = `<span style="color:red">Request failed: ${err.message}</span>`;
+        }
+    });
+});
+</script>
 </body>
-
 </html>
