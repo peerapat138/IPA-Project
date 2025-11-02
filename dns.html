@@ -160,7 +160,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // แปลง input เป็น array
         let hostArray = hostValue.split(",").map(s => s.trim()).filter(s => s.length > 0);
 
         if (typeValue === "NS" || typeValue === "TXT" || typeValue === "MX") {
@@ -181,17 +180,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (res.ok && data.results && data.results.length > 0) {
                 consoleBox.innerHTML = data.results.map((result, index) => {
-                let output = "";
-                let isTxtRecord = false;
+                    let output = "";
+                    let isTxtRecord = false;
 
-                if (Array.isArray(result.addresses)) {
-                    if (result.type === "MX") {
-                        output = result.addresses
-                            .map(a => `${a.exchange} (priority ${a.priority})`)
-                            .join("\n");
-                    }
-                    else if (result.type === "TXT") {
-                            isTxtRecord = true; 
+                    if (!result.success) {
+                        output = "Result not found";
+                    } else if (Array.isArray(result.addresses)) {
+                        if (result.type === "MX") {
+                            output = result.addresses
+                                .map(a => `${a.exchange} (priority ${a.priority})`)
+                                .join("\n");
+                        } else if (result.type === "TXT") {
+                            isTxtRecord = true;
                             output = result.addresses.map(a => {
                                 const recordString = a.join ? a.join(" ") : a;
                                 return `<div style="
@@ -202,62 +202,58 @@ document.addEventListener('DOMContentLoaded', () => {
                                     white-space: pre-wrap; 
                                     word-break: break-all;
                                 ">${recordString}</div>`;
-                            }).join(""); 
+                            }).join("");
+                        } else if (result.type === "NS") {
+                            output = result.addresses
+                                .map(a => {
+                                    const str = typeof a === "string" ? a : a.host || String(a);
+                                    return str.replace(/^www\./i, "");
+                                })
+                                .join("\n");
+                        } else if (result.type === "CNAME" || result.type === "PTR") {
+                            output = result.addresses.join("\n");
+                        } else if (result.type === "ANY") {
+                            isTxtRecord = true;
+                            output = result.addresses.map(a => {
+                                switch (a.type) {
+                                    case 'A':
+                                    case 'AAAA':
+                                        return `(${a.type}) ${a.address}`;
+                                    case 'MX':
+                                        return `(${a.type}) ${a.exchange} (Prio: ${a.priority})`;
+                                    case 'NS':
+                                    case 'CNAME':
+                                    case 'PTR':
+                                        return `(${a.type}) ${a.value}`;
+                                    case 'TXT':
+                                        return `(${a.type}) "${a.entries.join(' ')}"`;
+                                    case 'SOA':
+                                        return `(${a.type}) ${a.nsname}`;
+                                    default:
+                                        return `(${a.type}) [object Object]`;
+                                }
+                            }).join("\n");
+                        } else {
+                            output = result.addresses.join("\n");
                         }
-                    else if (result.type === "NS") {
-                        console.log(result)
-                        output = result.addresses
-                            .map(a => {
-                                const str = typeof a === "string" ? a : a.host || String(a);
-                                return str.replace(/^www\./i, "");
-                            })
-                            .join("\n");
-                    } else if (result.type === "CNAME" || result.type === "PTR") {
-                        output = result.addresses.join("\n");
-                    } else if (result.type === "ANY") {
-                        isTxtRecord = true;
-                        output = result.addresses.map(a => {
-                            switch (a.type) {
-                                case 'A':
-                                case 'AAAA':
-                                    return `(${a.type}) ${a.address}`;
-                                case 'MX':
-                                    return `(${a.type}) ${a.exchange} (Prio: ${a.priority})`;
-                                case 'NS':
-                                case 'CNAME':
-                                case 'PTR':
-                                    return `(${a.type}) ${a.value}`;
-                                case 'TXT':
-                                    return `(${a.type}) "${a.entries.join(' ')}"`;
-                                case 'SOA':
-                                    return `(${a.type}) ${a.nsname}`;
-                                default:
-                                    return `(${a.type}) [object Object]`;
-                            }
-                            return `<div style="background: rgba(0,0,0,0.2); border-left: 3px solid #00ffff; padding: 5px 8px; margin-top: 5px; white-space: pre-wrap; word-break: break-all;">${recordString}</div>`;
-                        }).join("\n");
                     } else {
-                        output = result.addresses.join("\n");
+                        output = result.error || "-";
                     }
-                } else {
-                    output = result.error || "-";
-                }
 
-               return `
-                    <div style="margin-bottom: 10px; border-bottom: 1px dashed #aaa; padding-bottom: 8px;">
-                        <b>#${index + 1}</b><br>
-                        <b>Host:</b> ${result.host}<br>
-                        <b>Domain:</b> ${result.domain || "-"}<br>
-                        <b>Type:</b> ${result.type}<br>
-                        <b>Status:</b> ${result.success ? "✅ Success" : "❌ Failed"}<br>
-                        
-                        ${isTxtRecord
-                            ? `<div>Output: ${output}</div>`
-                            : `<pre>Output: ${output}</pre>`
-                        }
-                    </div>
-                `;
-            }).join("");
+                    return `
+                        <div style="margin-bottom: 10px; border-bottom: 1px dashed #aaa; padding-bottom: 8px;">
+                            <b>#${index + 1}</b><br>
+                            <b>Input:</b> ${result.host}<br>
+                            <b>Type:</b> ${result.type}<br>
+                            <b>Status:</b> ${result.success ? "✅ Success" : "❌ Failed"}<br>
+                            
+                            ${isTxtRecord
+                                ? `<div>Output: ${output}</div>`
+                                : `<pre>Output: ${output}</pre>`
+                            }
+                        </div>
+                    `;
+                }).join("");
             } else {
                 consoleBox.innerHTML = `<span style="color:red">Error: ${data.error || "Unknown error"}</span>`;
             }
