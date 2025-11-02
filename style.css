@@ -207,6 +207,28 @@ option{
   box-shadow: 0 0 30px #ff7300;
 }
 
+.console::-webkit-scrollbar {
+  width: 8px; /* ความกว้างของ scrollbar */
+}
+
+/* พื้นหลังของ scrollbar */
+.console::-webkit-scrollbar-track {
+  background: rgba(0, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+/* ตัว scrollbar (ตัวเลื่อนจริง) */
+.console::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #00ffff, #007777);
+  border-radius: 10px;
+  border: 1px solid #00ffff;
+}
+
+/* Hover effect */
+.console::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #00ffff, #00cccc);
+}
+
 .console {
   background: rgba(32, 32, 34, 0.4);
   border-radius: 10px;
