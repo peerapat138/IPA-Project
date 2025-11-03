@@ -1,7 +1,23 @@
-FROM nginx:stable-alpine
+FROM node:20-alpine AS builder
+WORKDIR /app
 
-COPY . /usr/share/nginx/html
+COPY package*.json ./
+RUN npm ci
 
+COPY . .
+
+RUN npm run build
+
+FROM node:20-alpine AS runner
+WORKDIR /app
+
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/build ./build
+COPY --from=builder /app/node_modules ./node_modules
+
+ENV NODE_ENV=production
+
+ENV PORT=80
 EXPOSE 80
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["node", "build"]
