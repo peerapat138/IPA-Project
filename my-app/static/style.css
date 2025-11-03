@@ -1,0 +1,453 @@
+/* style.css */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Courier New', monospace;
+  background: url('bg.png') no-repeat center center fixed;
+  background-size: cover;
+  background-color: #111;
+  color: #00ffff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.frame {
+  width: 90%;
+  max-width: 1000px;
+  border: 3px solid #00ffff;
+  border-radius: 15px;
+  padding: 40px;
+  position: relative;
+}
+
+nav {
+  position: absolute;
+  top: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #111;
+  border: 2px solid #00ffff;
+  border-radius: 10px;
+  padding: 15px 30px;
+  display: flex;
+  gap: 25px;
+}
+
+nav a {
+  text-decoration: none;
+  color: #fff;
+  font-weight: bold;
+}
+
+nav a.active {
+  color: #00ffff;
+}
+
+nav a:hover{
+  transform: scale(1.1);
+}
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+h1 {
+  font-size: 32px;
+  color: #00ffff;
+  margin-top: 10px;
+}
+
+.subtitle {
+  font-size: 16px;
+  color: #00ffff;
+  opacity: 0.8;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.neon-btn {
+  background: transparent;
+  border: 2px solid #00ffff;
+  border-radius: 10px;
+  color: #00ffff;
+  padding: 15px 40px;
+  font-size: 18px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: 0.3s;
+  width: 30%;
+  text-align: center;
+  margin: auto auto;
+}
+
+.neon-btn:hover {
+  box-shadow: 0 0 20px #00ffff;
+  transform: scale(1.05);
+}
+
+.page {
+  align-items: flex-start;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.box {
+  width: 100%;
+  padding: 20px;
+}
+
+.title {
+  text-align: center;
+  font-size: 28px;
+  color: #00ffff;
+  margin-bottom: 10px;
+  letter-spacing: 2px;
+}
+
+.line {
+  border: none;
+  border-top: 1px solid #00ffff;
+  margin-bottom: 30px;
+}
+
+.container {
+  display: flex;
+  justify-content: space-between;
+  gap: 30px;
+}
+
+.left, .right {
+  border: 2px solid #00ffff;
+  border-radius: 15px;
+  padding: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.left h3 {
+  font-size: 18px;
+  color: #00ffff;
+  margin-bottom: 10px;
+}
+
+label {
+  display: block;
+  margin-top: 15px;
+  font-weight: bold;
+  color: #00ffff;
+}
+
+input, select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  background: transparent;
+  border: 2px solid #00ffff;
+  border-radius: 10px;
+  color: #00ffff;
+  font-family: 'Courier New', monospace;
+}
+
+option{
+ background-color: #000000;
+}
+
+::-webkit-input-placeholder{
+    color: #00ffff83;
+}
+
+.small-btn {
+  margin-top: 15px;
+  background: transparent;
+  border: 2px solid #00ffff;
+  border-radius: 10px;
+  padding: 8px 15px;
+  color: #00ffff;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn {
+    display: block;
+  margin: 20px auto 0 auto;
+  margin-top: 25px;
+  background: linear-gradient(180deg, #ff7300, #ff0000);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  padding: 12px 40px;
+  font-weight: bold;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 0 15px #ff7300;
+  transition: 0.3s;
+}
+
+.btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px #ff7300;
+}
+
+.console::-webkit-scrollbar {
+  width: 8px; 
+}
+
+.console::-webkit-scrollbar-track {
+  background: rgba(0, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.console::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #00ffff, #007777);
+  border-radius: 10px;
+  border: 1px solid #00ffff;
+}
+
+.console::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #00ffff, #00cccc);
+}
+
+.console {
+  background: rgba(32, 32, 34, 0.4);
+  border-radius: 10px;
+  font-family: 'Courier New', monospace;
+  color: #00ffff;
+  height: 300px;
+  overflow-y: auto;
+  overflow-x: auto;
+  text-align: left;
+  padding: 10px;
+}
+
+.command-param-input {
+      display: none; 
+      margin-top: 5px;
+      margin-bottom: 10px;
+      padding: 8px;
+      border: 1px solid #ccc;
+      width: 100%;
+      box-sizing: border-box;
+}
+
+.time {
+  text-align: right;
+  margin-top: 20px;
+  font-size: 20px;
+  color: #00ffff;
+}
+
+/* ================= NETWORK-TABLE ================= */
+.network-container {
+  display: flex;
+  flex-direction: column;
+  width: 80%;
+  margin: 0 auto;
+  gap: 10px;
+}
+
+.add {
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.close {
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.network-item {
+  border: 2px solid #00ffff;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+}
+
+.network-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  font-size: 20px;
+  font-weight: bold;
+  color: #00ffff;
+}
+
+.network-header button {
+  background: none;
+  border: none;
+  color: #00ffff;
+  font-size: 24px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.network-item.detail {
+  padding-left: 20px;
+}
+
+.remove{
+    display: block;
+    right: 0;
+}
+
+.open-popup {
+  display: block;
+  margin: 20px auto 0 auto;
+  background: radial-gradient(circle, #ff6600, #cc0000);
+  color: #fff;
+  font-family: "Courier New", monospace;
+  border: none;
+  font-size: 18px;
+  font-weight: bold;
+  border-radius: 12px;
+  padding-inline: 10px;
+  width: 14em;
+  height: 60px;
+  cursor: pointer;
+  box-shadow: 0 0 15px #ff3300;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.open-popup:hover {
+  transform: scale(1.1);
+}
+
+/* POPUP */
+.popup {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+.popup.hidden {
+  display: none;
+}
+
+.popup-box {
+  background-color: #111;
+  border: 2px solid #00ffff;
+  box-shadow: 0 0 20px #00ffff88;
+  border-radius: 15px;
+  padding: 30px 40px;
+  color: #00ffff;
+  text-align: center;
+  font-family: "Courier New", monospace;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.popup-box h2 {
+  margin-bottom: 15px;
+  font-size: 1.5em;
+}
+
+.popup-box label {
+  display: block;
+  text-align: left;
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.popup-box input {
+  width: 100%;
+  margin: 5px 0 15px 0;
+  padding: 8px;
+  background-color: transparent;
+  border: 2px solid #00ffff;
+  border-radius: 8px;
+  color: #00ffff;
+  font-size: 1em;
+}
+
+.popup-box button {
+  margin: 10px;
+  padding: 8px 25px;
+  border: 2px solid #00ffff;
+  background: transparent;
+  color: #00ffff;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.popup-box button:hover {
+  background-color: #00ffff;
+  color: #111;
+}
+
+/* Network Table Popup Styles */
+.popup-nwtable { 
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+    background: rgba(0, 0, 0, 0.6); 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    z-index: 2000; 
+}
+.popup-nwtable.hidden { display: none; }
+
+.popup-nwtable .popup-box { 
+    background: rgb(0, 0, 0); 
+    padding: 20px; 
+    border-radius: 8px; 
+    width: 90%; 
+    max-width: 400px; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.popup-nwtable .ip-list-container {
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid #444444;
+    margin: 10px 0;
+    padding: 5px;
+}
+.popup-nwtable .ip-list-item {
+    padding: 8px;
+    cursor: pointer;
+    border-bottom: 1px dashed #528594;
+    transition: background-color 0.2s;
+}
+.popup-nwtable .ip-list-item:hover {
+    background-color: #3b3b3b;
+    font-weight: bold;
+}
+.popup-nwtable button.close { 
+     margin: 10px;
+  padding: 8px 25px;
+  border: 2px solid #00ffff;
+  background: transparent;
+  color: #00ffff;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.3s;
+
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
