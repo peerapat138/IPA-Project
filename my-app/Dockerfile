@@ -16,7 +16,8 @@ COPY --from=builder /app/build ./build
 COPY --from=builder /app/node_modules ./node_modules
 
 ENV NODE_ENV=production
-ENV PORT=5173
-EXPOSE 5173
+
+ENV PORT=80
+EXPOSE 80
 
 CMD ["node", "build"]
