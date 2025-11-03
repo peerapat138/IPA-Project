@@ -4,7 +4,7 @@
 
 <script>
   import { onMount } from "svelte";
-  const API_BASE = "http://localhost:3000";
+  const API_BASE = "/api";
 
   onMount(() => {
     // clock
